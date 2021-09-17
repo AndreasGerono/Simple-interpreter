@@ -1,0 +1,6 @@
+.DS_Store
+.vscode/
+calculator
+lex.yy.c
+parser.tab.c
+parser.tab.h
