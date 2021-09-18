@@ -18,7 +18,7 @@ EXP     ([Ee][-+]?[0-9]+)
 /* return first char as a token */
 
 %%
- /* single character ops */
+ /* single character symbols */
 "=" |
 "+" |
 "-" |
@@ -28,6 +28,8 @@ EXP     ([Ee][-+]?[0-9]+)
 "|" |
 "," |
 ";" |
+"{" |
+"}" |
 "(" |
 ")"                     { return yytext[0]; }
 
@@ -41,11 +43,9 @@ EXP     ([Ee][-+]?[0-9]+)
 
  /* keywords */
 "if"                    { return IF; }
-"then"                  { return THEN; }
 "else"                  { return ELSE; }
 "while"                 { return WHILE; }
-"do"                    { return DO; }
-"let"                   { return LET; }
+"fun"                   { return FUN; }
 
  /* buld in functions */
 "sqrt"                  { yylval.fn = B_sqrt; return FUNC; }
@@ -62,6 +62,6 @@ EXP     ([Ee][-+]?[0-9]+)
 "//".*                  /* ignore comment */
 [ \t]                   /* ignore whitespace */
 \\\n                    { printf("c> "); }  /* ignore line continuation as \ */
-\n                      { return EOL; }
+\n                      { }
 .                       { yyerror("Mystery character %c\n", *yytext); }
 %%

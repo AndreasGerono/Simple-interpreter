@@ -67,7 +67,7 @@ static double calluser(struct ufncall *f)
         }
         /* if this is a list node */
         if (args->nodetype == 'L') {
-            newval[i] = eval(args);
+            newval[i] = eval(args->l);
             args = args->r;
         } else {    /* if it is the end of the list */
             newval[i] = eval(args);
@@ -105,14 +105,12 @@ static unsigned symhash(char *sym)
     while ((c = *sym++)) {
         hash = hash*9 ^ c;
     }
-    printf("DEBUG: hash: %u\n", hash);
     return hash;
 }
 
 struct symbol *lookup(char *sym)
 {
     unsigned i = symhash(sym) % NHASH;
-    printf("DEBUG: i: %u\n", i);
     struct symbol *sp = &symtab[i];
     int scount = NHASH;
 
@@ -317,7 +315,7 @@ double eval(struct ast *a)
     case 'W':
         v = 0.0;
         if (((struct flow*)a)->tl) {
-            while (((struct flow*)a)->cond != 0) {
+            while (eval(((struct flow*)a)->cond) != 0) {
                 v = eval(((struct flow*)a)->tl);
             }
         }

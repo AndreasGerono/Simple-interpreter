@@ -28,8 +28,7 @@ int yylex(void);
 %token <d> NUMBER
 %token <s> NAME
 %token <fn> FUNC
-%token EOL
-%token IF THEN ELSE WHILE DO LET
+%token IF ELSE WHILE FUN
 
 /* precedence and associativit rules for symbols */
 %nonassoc <fn> CMP
@@ -40,7 +39,7 @@ int yylex(void);
 %nonassoc '|' UMINUS
 
 /* Assigns the value of <a> to exp... */
-%type <a> exp stmt list explist
+%type <a> exp stmt list explist all_stmt
 %type <sl> symlist
 
 /* defines the top-level rule */
@@ -60,30 +59,34 @@ int yylex(void);
 
 calclist:
     /* empty */
-  | calclist stmt EOL {
+  | calclist all_stmt {
       printf("= %4.4g\n>", eval($2)); 
       treefree($2);
   }
-  | calclist LET NAME '(' symlist ')' '=' list EOL {
+  | calclist FUN NAME '(' symlist ')' '{' list '}' {
       dodef($3, $5, $8);
       printf("Defined %s\n> ", $3->name);
   }
-  | calclist error EOL { printf("> "); }
+  | calclist error { printf("> "); }
     /* blank line or comment and error recovery 
      * pseudotoken error indicates an error recovery point
      */
 ;
 
+all_stmt:
+      stmt
+    | exp ';'
+
 stmt:
-    IF exp THEN list            { $$ = newflow('I', $2, $4, NULL); }
-  | IF exp THEN list ELSE list  { $$ = newflow('I', $2, $4, $6); }
-  | WHILE exp DO list           { $$ = newflow('I', $2, $4, NULL); }
-  | exp
+    IF exp '{'list '}'                    { $$ = newflow('I', $2, $4, NULL); }
+  | IF exp '{'list '}' ELSE '{' list '}'  { $$ = newflow('I', $2, $4, $8); }
+  | WHILE exp '{' list '}'                { $$ = newflow('W', $2, $4, NULL); }
 ;
 
 list:
-    /* empty */             { $$ = NULL; }
-  | stmt ';' list           { $$ = $3 == NULL ? $1 : newast('L', $1, $3); }
+    /* empty */                { $$ = NULL; }
+  | stmt list                  { $$ = $2 == NULL ? $1 : newast('L', $1, $2); }
+  | exp ';' list               { $$ = $3 == NULL ? $1 : newast('L', $1, $3); }
 ;
 
 exp:
