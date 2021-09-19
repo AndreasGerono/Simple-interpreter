@@ -245,7 +245,7 @@ struct ast *newnum(double d)
         exit(0);
     }
     a->nodetype = 'K';
-    a->number  = d;
+    a->number = d;
     return (struct ast *)a;
 }
 
@@ -283,9 +283,12 @@ double eval(struct ast *a)
     case '-': v = eval(a->l) - eval(a->r);              break;
     case '*': v = eval(a->l) * eval(a->r);              break;
     case '/': v = eval(a->l) / eval(a->r);              break;
-    case '|': v = fabs(eval(a->l));                     break;
-    case '^': v = pow(eval(a->l), eval(a->r));          break;
     case 'M': v = -eval(a->l);                          break;
+    case '!': v = !eval(a->l);                          break;
+    /* bitwise operations */
+    case '^': v = (uint32_t)eval(a->l) ^ (uint32_t)eval(a->r);    break;
+    case '&': v = (uint32_t)eval(a->l) & (uint32_t)eval(a->r);    break;
+    case '|': v = (uint32_t)eval(a->l) | (uint32_t)eval(a->r);    break;
     /* comparisons */
     case '1': v = eval(a->l) > eval(a->r) ? 1 : 0;      break;
     case '2': v = eval(a->l) < eval(a->r) ? 1 : 0;      break;
@@ -293,6 +296,10 @@ double eval(struct ast *a)
     case '4': v = eval(a->l) == eval(a->r) ? 1 : 0;     break;
     case '5': v = eval(a->l) >= eval(a->r) ? 1 : 0;     break;
     case '6': v = eval(a->l) <= eval(a->r) ? 1 : 0;     break;
+    /* logical operations */
+    case '7': v = eval(a->l) && eval(a->r);             break;
+    case '8': v = eval(a->l) || eval(a->r);             break;
+
     /* control flow */
     /* null eexpressions allowed in the grammar, so check for them */
     /* if/then/else */
@@ -323,6 +330,7 @@ double eval(struct ast *a)
     case 'L': eval(a->l); v = eval(a->r);               break;
     case 'F': v = callbuiltin((struct fncall*)a);       break;
     case 'C': v = calluser((struct ufncall*)a);         break;
+    case ';': break;
     default: printf("internal error: bad node %c\n", a->nodetype);
     }
 
@@ -334,14 +342,15 @@ void treefree(struct ast *a)
     switch (a->nodetype) {
     /* one subtree -> right side op */
     case '+': case '-': case '*': case '/':
-    case '^': case 'L': case '1': case '2':
-    case '3': case '4': case '5': case '6':
+    case '^': case '&': case '|': case 'L': 
+    case '1': case '2': case '3': case '4': 
+    case '5': case '6': case '7': case '8':
         treefree(a->r);
     /* one subtree -> left side op */
-    case '|': case 'M': case 'C': case 'F':
+    case '!': case 'M': case 'C': case 'F':
         treefree(a->l);
     /* no subtree */
-    case 'K': case 'N':
+    case 'K': case 'N': case ';':
         break;
     case '=':
         free(((struct symasgn *)a)->v);

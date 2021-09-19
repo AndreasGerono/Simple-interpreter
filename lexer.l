@@ -11,6 +11,7 @@
 /* complex patterns defined heare to reuse later */
 /* float exponent */
 
+NAMES   ([a-zA-Z][a-zA-Z0-9]*)
 EXP     ([Ee][-+]?[0-9]+)
 
 /* Actions return a token*/
@@ -20,12 +21,14 @@ EXP     ([Ee][-+]?[0-9]+)
 %%
  /* single character symbols */
 "=" |
+"!" |
+"&" |
+"|" |
 "+" |
 "-" |
 "*" |
 "^" |
 "/" |
-"|" |
 "," |
 ";" |
 "{" |
@@ -40,6 +43,11 @@ EXP     ([Ee][-+]?[0-9]+)
 "=="                    { yylval.fn = 4; return CMP; }
 ">="                    { yylval.fn = 5; return CMP; }
 "<="                    { yylval.fn = 6; return CMP; }
+ /* logical operators */
+"&&"                    { yylval.fn = 7;  return AND; }
+"||"                    { yylval.fn = 8; return OR; }
+
+
 
  /* keywords */
 "if"                    { return IF; }
@@ -54,7 +62,7 @@ EXP     ([Ee][-+]?[0-9]+)
 "print"                 { yylval.fn = B_print; return FUNC; }
 
  /* names */
-[a-zA-Z][a-zA-Z0-9]*    { yylval.s = lookup(yytext); return NAME; }     /* looks up the name in the sym table */
+{NAMES}                 { yylval.s = lookup(yytext); return NAME; }     /* looks up the name in the sym table */
 
 "."?[0-9]+{EXP}?    |
 [0-9]+"."[0-9]*{EXP}    { yylval.d = atof(yytext); return NUMBER; }

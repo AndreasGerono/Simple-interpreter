@@ -31,12 +31,17 @@ int yylex(void);
 %token IF ELSE WHILE FUN
 
 /* precedence and associativit rules for symbols */
-%nonassoc <fn> CMP
 %right '='
+%left <fn> OR
+%left <fn> AND
+%left '|'
+%left '^'
+%left '&'
+%left <fn> CMP
 %left '+' '-'
 %left '*' '/'
-%left '^'
-%nonassoc '|' UMINUS
+%nonassoc '!'
+%nonassoc UMINUS
 
 /* Assigns the value of <a> to exp... */
 %type <a> exp stmts list explist all_symbols if_stmt
@@ -59,9 +64,9 @@ int yylex(void);
 
 calclist:
     /* empty */
-  | calclist all_symbols 
+  | calclist all_symbols
   {
-      printf("= %4.4g\n>", eval($2)); 
+      printf("= %4.4g\n> ", eval($2)); 
       treefree($2);
   }
   | calclist FUN NAME '(' symlist ')' '{' list '}' 
@@ -78,6 +83,7 @@ calclist:
 all_symbols:
     stmts
   | exp ';'
+  | ';'     { $$ = newast(';', NULL, NULL); }
 ;
 
 list:
@@ -98,14 +104,18 @@ if_stmt:
 
 exp:
     exp CMP exp                { $$ = newcmp($2, $1, $3); }
+  | exp AND exp                { $$ = newcmp($2, $1, $3); }
+  | exp OR exp                 { $$ = newcmp($2, $1, $3); }
   | exp '+' exp                { $$ = newast('+', $1, $3); }
   | exp '-' exp                { $$ = newast('-', $1, $3); }
   | exp '*' exp                { $$ = newast('*', $1, $3); }
   | exp '/' exp                { $$ = newast('/', $1, $3); }
   | exp '^' exp                { $$ = newast('^', $1, $3); }
-  | '|' exp                    { $$ = newast('|', $2, NULL); }
+  | exp '|' exp                { $$ = newast('|', $1, $3); }
+  | exp '&' exp                { $$ = newast('&', $1, $3); }
   | '(' exp ')'                { $$ = $2; }
   | '-' exp %prec UMINUS       { $$ = newast('M', $2, NULL); }  /* use UMINUS precedence for this rule */
+  | '!' exp %prec UMINUS       { $$ = newast('!', $2, NULL); }  /* use UMINUS precedence for this rule */
   | NUMBER                     { $$ = newnum($1); }
   | NAME                       { $$ = newref($1); }
   | NAME '=' exp               { $$ = newasgn($1, $3); }
