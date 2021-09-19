@@ -39,7 +39,7 @@ int yylex(void);
 %nonassoc '|' UMINUS
 
 /* Assigns the value of <a> to exp... */
-%type <a> exp stmt list explist all_stmt
+%type <a> exp stmts list explist all_symbols if_stmt
 %type <sl> symlist
 
 /* defines the top-level rule */
@@ -59,11 +59,13 @@ int yylex(void);
 
 calclist:
     /* empty */
-  | calclist all_stmt {
+  | calclist all_symbols 
+  {
       printf("= %4.4g\n>", eval($2)); 
       treefree($2);
   }
-  | calclist FUN NAME '(' symlist ')' '{' list '}' {
+  | calclist FUN NAME '(' symlist ')' '{' list '}' 
+  {
       dodef($3, $5, $8);
       printf("Defined %s\n> ", $3->name);
   }
@@ -73,20 +75,25 @@ calclist:
      */
 ;
 
-all_stmt:
-      stmt
-    | exp ';'
-
-stmt:
-    IF exp '{'list '}'                    { $$ = newflow('I', $2, $4, NULL); }
-  | IF exp '{'list '}' ELSE '{' list '}'  { $$ = newflow('I', $2, $4, $8); }
-  | WHILE exp '{' list '}'                { $$ = newflow('W', $2, $4, NULL); }
+all_symbols:
+    stmts
+  | exp ';'
 ;
 
 list:
-    /* empty */                { $$ = NULL; }
-  | stmt list                  { $$ = $2 == NULL ? $1 : newast('L', $1, $2); }
-  | exp ';' list               { $$ = $3 == NULL ? $1 : newast('L', $1, $3); }
+    /* empty */                 { $$ = NULL; }
+  | all_symbols list            { $$ = $2 == NULL ? $1 : newast('L', $1, $2); }
+;
+
+stmts:
+    if_stmt
+  | WHILE '(' exp ')' '{' list '}'                        { $$ = newflow('W', $3, $6, NULL); }
+;
+
+if_stmt:
+    IF '(' exp ')' '{'list '}'                            { $$ = newflow('I', $3, $6, NULL); }
+  | IF '(' exp ')' '{'list '}' ELSE if_stmt               { $$ = newflow('I', $3, $6, $9); }
+  | IF '(' exp ')' '{'list '}' ELSE '{' list '}'          { $$ = newflow('I', $3, $6, $10); }
 ;
 
 exp:
