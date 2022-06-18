@@ -1,5 +1,5 @@
 # Simple-interpreter
-Calculator with interpreter based on Flax/Bison
+Calculator with interpreter based on Flex/Bison
 
 ### How to use
 - run make first!
@@ -13,3 +13,5 @@ $ ./calculator
 # File parsing
 ./calculator < test.txt 
 ```
+
+![calculator](./calc.gif)
